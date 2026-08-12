@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f1512">
+<title>Tri traversées — SFCME</title>
+<style>
+  :root{
+    --bg:#0e1311; --panel:#161d1a; --panel2:#1d2622; --line:#2a3630;
+    --txt:#e8efe9; --muted:#8ea095; --accent:#3DCD58; --accent-d:#2ea847;
+    --kuvag:#3aa0ff; --motic:#ffb03a; --prod:#ff5c6c; --frn:#c084fc;
+    --r:14px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,Segoe UI,Roboto,Inter,sans-serif;font-size:16px}
+  body{padding-bottom:76px}
+  h1,h2,h3{margin:0;font-weight:800;letter-spacing:-.02em}
+  .wrap{max-width:640px;margin:0 auto;padding:0 14px}
+  header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#0e1311,#0e1311f2);
+    border-bottom:1px solid var(--line);padding:10px 0}
+  .hd{display:flex;align-items:center;gap:10px}
+  .logo{width:34px;height:34px;border-radius:9px;background:var(--accent);
+    display:grid;place-items:center;color:#062b12;font-weight:900}
+  .hd small{color:var(--muted);display:block;font-weight:600;font-size:12px}
+  .banner{background:#3a2a12;color:#ffcf8a;border:1px solid #6a4a1a;border-radius:10px;
+    padding:8px 12px;margin-top:8px;font-size:13px;display:none}
+
+  /* Session */
+  .session{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    padding:12px;margin-top:12px}
+  .session .lbl{color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .refgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+  .refbtn{background:var(--panel2);border:1px solid var(--line);border-radius:11px;
+    padding:12px 10px;text-align:left;color:var(--txt);font-weight:700;cursor:pointer;transition:.12s}
+  .refbtn small{display:block;color:var(--muted);font-weight:600;font-size:12px;margin-top:2px}
+  .refbtn.on{border-color:var(--accent);background:#12271a;box-shadow:0 0 0 1px var(--accent) inset}
+
+  /* Big actions */
+  .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+  .big{border:none;border-radius:var(--r);padding:18px 12px;font-size:17px;font-weight:800;
+    color:#062b12;background:var(--accent);cursor:pointer;display:flex;align-items:center;
+    justify-content:center;gap:8px}
+  .big.sec{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
+  .big:active{transform:scale(.98)}
+
+  /* Cards */
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-top:12px}
+  .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .kpi{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:12px}
+  .kpi .v{font-size:26px;font-weight:900;letter-spacing:-.03em}
+  .kpi .k{color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+
+  /* Entry list */
+  .entry{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+  .entry:first-child{border-top:none}
+  .tag{font-size:11px;font-weight:800;padding:3px 7px;border-radius:6px}
+  .t-KUVAG{background:#0f2a44;color:var(--kuvag)}
+  .t-MOTIC{background:#3a2b0f;color:var(--motic)}
+  .entry .mid{flex:1;min-width:0}
+  .entry .mid b{font-size:14px}
+  .entry .mid small{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .del{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 8px}
+
+  /* Tabs */
+  nav{position:fixed;bottom:0;left:0;right:0;z-index:40;background:#10161380;
+    backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex}
+  nav button{flex:1;background:none;border:none;color:var(--muted);padding:12px 0 10px;
+    font-size:11px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+  nav button.on{color:var(--accent)}
+  nav svg{width:22px;height:22px}
+  .view{display:none}.view.on{display:block}
+
+  /* Scanner overlay */
+  .scan{position:fixed;inset:0;z-index:100;background:#000;display:none;flex-direction:column}
+  .scan video{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+  .scanbar{position:relative;z-index:2;padding:14px;display:flex;justify-content:space-between;align-items:center;
+    background:linear-gradient(180deg,#000c,#0000)}
+  .scanbar button{background:#ffffff22;border:none;color:#fff;padding:8px 14px;border-radius:10px;font-weight:700;font-size:15px}
+  .reticle{position:absolute;z-index:2;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:70%;max-width:320px;aspect-ratio:1.6;border:3px solid #fff;border-radius:16px;
+    box-shadow:0 0 0 4000px #0009}
+  .scanhint{position:absolute;z-index:2;bottom:40px;left:0;right:0;text-align:center;color:#fff;font-weight:700}
+
+  /* Sheet (saisie) */
+  .sheet{position:fixed;inset:0;z-index:90;background:#0009;display:none;align-items:flex-end}
+  .sheet.on{display:flex}
+  .sheet .inner{background:var(--panel);width:100%;max-width:640px;margin:0 auto;
+    border-radius:20px 20px 0 0;border:1px solid var(--line);padding:16px;max-height:92vh;overflow:auto}
+  .sheet h3{margin-bottom:4px}
+  .ctx{color:var(--muted);font-size:13px;margin-bottom:12px;word-break:break-all}
+  .grp{margin-top:14px}
+  .grp>span{color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .chip{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px 13px;
+    font-weight:700;cursor:pointer;font-size:15px}
+  .chip.on{border-color:var(--accent);background:#12271a;color:var(--txt)}
+  .chip.prod.on{border-color:var(--prod);background:#2a1216}
+  .chip.frn.on{border-color:var(--frn);background:#221430}
+  .qty{display:flex;align-items:center;gap:14px;margin-top:8px}
+  .qty button{width:44px;height:44px;border-radius:11px;border:1px solid var(--line);
+    background:var(--panel2);color:var(--txt);font-size:22px;font-weight:800}
+  .qty b{font-size:22px;min-width:30px;text-align:center}
+  .save{width:100%;margin-top:18px;border:none;border-radius:13px;padding:16px;
+    background:var(--accent);color:#062b12;font-size:17px;font-weight:800}
+  .save:disabled{opacity:.4}
+  .cancel{width:100%;margin-top:8px;background:none;border:none;color:var(--muted);padding:8px;font-weight:600}
+
+  input,select{background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+    border-radius:10px;padding:10px 12px;font-size:15px;width:100%}
+  .row{display:flex;gap:8px;margin-top:8px}
+  .toolbtn{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+    border-radius:11px;padding:12px;font-weight:700;cursor:pointer}
+  canvas{max-width:100%}
+  .muted{color:var(--muted);font-size:13px}
+  .empty{text-align:center;color:var(--muted);padding:26px 10px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="hd">
+      <div class="logo">SE</div>
+      <div>
+        <h1 style="font-size:18px">Tri traversées</h1>
+        <small>SFCME · Bord de ligne · CS&Q</small>
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        <small style="color:var(--muted);font-weight:600" id="today"></small>
+      </div>
+    </div>
+    <div class="banner" id="httpsWarn">⚠️ Caméra indisponible en local. Héberge le fichier en HTTPS (GitHub Pages) ou ouvre-le en localhost. La saisie manuelle reste dispo.</div>
+  </div>
+</header>
+
+<!-- VUE : SAISIE -->
+<div class="view on" id="v-saisie">
+  <div class="wrap">
+    <div class="session">
+      <div class="lbl">Poste / BDL en cours</div>
+      <div class="refgrid" id="refgrid"></div>
+      <div class="row" style="margin-top:8px;align-items:center">
+        <span class="muted" style="white-space:nowrap">Date traitée</span>
+        <input type="date" id="sessDate" style="flex:1">
+        <button class="toolbtn" id="sessHier" style="max-width:80px">Hier</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button class="toolbtn" id="scanBdl">📷 Scanner l'étiquette BDL</button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="big" id="scanPart">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 9h18M8 4v14"/></svg>
+        Scanner pièce
+      </button>
+      <button class="big sec" id="manual">✎ Saisie manuelle</button>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <h3 style="font-size:15px">Dernières saisies</h3>
+        <span class="muted" id="cntToday"></span>
+      </div>
+      <div id="entryList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- VUE : DASHBOARD -->
+<div class="view" id="v-dash">
+  <div class="wrap">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2 style="font-size:16px">Tableau de bord</h2>
+        <select id="dashScope" style="width:auto">
+          <option value="all" selected>Tout</option>
+          <option value="week">Cette semaine</option>
+        </select>
+      </div>
+      <div class="kpis" style="margin-top:12px">
+        <div class="kpi"><div class="v" id="kPieces">0</div><div class="k">Pièces défaut</div></div>
+        <div class="kpi"><div class="v" id="kCout">0 €</div><div class="k">Coût rebut total</div></div>
+        <div class="kpi"><div class="v" id="kCoutF" style="color:#ff5c6c">0 €</div><div class="k">dont Fournisseur</div></div>
+        <div class="kpi"><div class="v" id="kCoutP" style="color:#c084fc">0 €</div><div class="k">dont Production</div></div>
+        <div class="kpi"><div class="v" id="kKuvag">0</div><div class="k">KUVAG</div></div>
+        <div class="kpi"><div class="v" id="kMotic">0</div><div class="k">MOTIC</div></div>
+      </div>
+    </div>
+    <div class="card"><h3 style="font-size:14px;margin-bottom:10px">Suivi par semaine</h3><canvas id="chWeek" height="180"></canvas></div>
+    <div class="card"><h3 style="font-size:14px;margin-bottom:10px">Défauts (Pareto)</h3><canvas id="chDef" height="180"></canvas></div>
+    <div class="card"><h3 style="font-size:14px;margin-bottom:10px">Responsabilité</h3><canvas id="chResp" height="170"></canvas></div>
+    <div class="card"><h3 style="font-size:14px;margin-bottom:10px">Par référence</h3><canvas id="chRef" height="180"></canvas></div>
+  </div>
+</div>
+
+<!-- VUE : DONNÉES -->
+<div class="view" id="v-data">
+  <div class="wrap">
+    <div class="card">
+      <h2 style="font-size:16px">Données</h2>
+      <p class="muted">Tout est stocké sur ce téléphone (hors-ligne). Exporte vers Excel pour ta fiche de suivi.</p>
+      <div class="row"><button class="toolbtn" id="expXlsx">⬇️ Export Excel (.xlsx)</button></div>
+      <div class="row"><button class="toolbtn" id="expCsv">⬇️ Export CSV</button>
+        <button class="toolbtn" id="impXlsx">⬆️ Importer .xlsx</button></div>
+      <input type="file" id="fileIn" accept=".xlsx,.xls,.csv" style="display:none">
+      <div class="row"><button class="toolbtn" id="recalc">↻ Recalculer les prix depuis le référentiel</button></div>
+      <div class="row" style="margin-top:14px"><button class="toolbtn" id="wipe" style="border-color:#5a2530;color:#ff8a99">🗑️ Vider toutes les données</button></div>
+    </div>
+    <div class="card">
+      <h3 style="font-size:14px">Base de données (Supabase)</h3>
+      <p class="muted">Optionnel — synchronise les saisies de tous les postes en temps réel. L'app fonctionne sans (stockage local hors-ligne), la synchro rattrape dès qu'il y a du réseau.</p>
+      <input id="sbUrl" placeholder="URL projet — https://xxxx.supabase.co">
+      <input id="sbKey" placeholder="Clé anon (publishable)" style="margin-top:8px">
+      <input id="sbTable" placeholder="Table (rebut_traversees)" style="margin-top:8px">
+      <div class="row"><button class="toolbtn" id="sbSave">Enregistrer la connexion</button>
+        <button class="toolbtn" id="sbSync">↕ Synchroniser</button></div>
+      <div class="muted" id="sbStatus" style="margin-top:6px"></div>
+    </div>
+    <div class="card">
+      <h3 style="font-size:14px">Référentiel (modifiable)</h3>
+      <p class="muted">Référence → calibre → coût unitaire. Utilisé pour l'auto-remplissage et le coût.</p>
+      <div id="refEditor"></div>
+      <button class="toolbtn" id="addRef" style="margin-top:8px">+ Ajouter une référence</button>
+    </div>
+    <div class="card">
+      <h3 style="font-size:14px">Types de défaut</h3>
+      <input id="defList" placeholder="séparés par des virgules">
+      <h3 style="font-size:14px;margin-top:12px">Responsabilités</h3>
+      <input id="respList" placeholder="séparés par des virgules">
+      <button class="toolbtn" id="saveCfg" style="margin-top:10px">Enregistrer le référentiel</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <button class="on" data-v="saisie">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Saisie</button>
+  <button data-v="dash">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Dashboard</button>
+  <button data-v="data">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.6 3.6 3 8 3s8-1.4 8-3V6M4 12c0 1.6 3.6 3 8 3s8-1.4 8-3"/></svg>Données</button>
+</nav>
+
+<!-- SCANNER -->
+<div class="scan" id="scanner">
+  <div class="scanbar">
+    <span style="color:#fff;font-weight:700" id="scanTitle">Scanner</span>
+    <span style="display:flex;gap:8px">
+      <button id="torchBtn" style="display:none">💡</button>
+      <button id="scanClose">Fermer ✕</button>
+    </span>
+  </div>
+  <video id="video" playsinline muted></video>
+  <div class="reticle"></div>
+  <div class="scanhint">Vise le Data Matrix (MOTIC) ou le code-barres (KUVAG)</div>
+</div>
+
+<!-- SHEET SAISIE -->
+<div class="sheet" id="sheet">
+  <div class="inner">
+    <h3>Nouveau défaut</h3>
+    <div class="ctx" id="sheetCtx"></div>
+    <div class="grp"><span>Défaut</span><div class="chips" id="defChips"></div></div>
+    <div class="grp"><span>Responsabilité</span><div class="chips" id="respChips"></div></div>
+    <div class="grp"><span>Quantité</span>
+      <div class="qty"><button id="qMinus">−</button><b id="qVal">1</b><button id="qPlus">+</button></div>
+    </div>
+    <div class="grp" id="manualRefWrap" style="display:none">
+      <span>Référence</span><select id="manualRef"></select>
+      <span style="margin-top:8px;display:block">Fournisseur</span>
+      <select id="manualFrn"><option>MOTIC</option><option>KUVAG</option></select>
+    </div>
+    <button class="save" id="saveEntry" disabled>Enregistrer</button>
+    <button class="cancel" id="cancelEntry">Annuler</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.20.0/umd/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script>
+/* ============ CONFIG PAR DÉFAUT (déduit de tes étiquettes) ============ */
+const DEFAULT_CFG = {
+  site:"33",
+  references:[
+    {ref:"51193702F0", calibre:"200APF", cout:16.15},
+    {ref:"51193710F0", calibre:"400A",   cout:33.54},
+    {ref:"51193706F0", calibre:"630A",   cout:22.28},
+    {ref:"GEX67896",   calibre:"400ACC", cout:41.81},
+    {ref:"51193708F0", calibre:"630A5/8",cout:20.51},
+    {ref:"51193712F0", calibre:"BW",     cout:17.88}
+  ],
+  defauts:["Choc interface","Rayure interface","Corps étranger interface","Absence étiquette","Filetage SF6 HS","Autre"],
+  responsabilites:["Production","Fournisseur"]
+};
+const LS_E="tri_entries", LS_C="tri_cfg";
+let cfg = load(LS_C, DEFAULT_CFG);
+let entries = load(LS_E, []);
+let session = {ref:null, calibre:null, cout:0};
+let draft = null;         // saisie en cours
+let mode = "part";        // "part" | "bdl"
+let reader = null;
+
+function load(k,def){try{const v=JSON.parse(localStorage.getItem(k));return v??def;}catch(e){return def;}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function eur(n){return (Math.round(n*100)/100).toLocaleString('fr-FR',{minimumFractionDigits:2})+' €';}
+function todayStr(){const d=new Date();return d.toLocaleDateString('fr-FR');}
+function excelWeekNum(d){const j=new Date(d.getFullYear(),0,1);const days=Math.floor((d-j)/86400000);return Math.floor((days+j.getDay())/7)+1;}
+function titleFrn(f){f=(f||'').toUpperCase();return f==='MOTIC'?'Motic':(f==='KUVAG'?'Kuvag':f);}
+function localISO(d){d=d||new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);}
+function entryDate(e){return e.dateISO?new Date(e.dateISO+'T12:00:00'):new Date(e.ts);}
+function entryWeek(e){return excelWeekNum(entryDate(e));}
+
+/* ============ RÉFÉRENTIEL : lookup ============ */
+function refInfo(ref){return cfg.references.find(r=>r.ref===ref)||null;}
+
+/* Détection fournisseur : Data Matrix/QR = MOTIC, linéaire = KUVAG */
+function supplierFromFormat(fmtName){
+  return (/DATA_MATRIX|QR/i.test(fmtName)) ? "MOTIC" : "KUVAG";
+}
+/* Parse le contenu d'un code MOTIC pour retrouver la référence Schneider */
+function parseMotic(text){
+  const refM = text.match(/(5119\d{3}F0|GEX\d{5})/i);
+  const mM   = text.match(/M\d{2}-\d{2}-\d{2}-\d{3}-\d{3}/i);
+  const lotM = text.match(/KXCU\d{6}/i);
+  return {ref: refM?refM[1].toUpperCase():null, mcode:mM?mM[0]:null, lot:lotM?lotM[0]:null};
+}
+/* ============ RENDER : session / référentiel ============ */
+function renderRefGrid(){
+  const g=document.getElementById('refgrid'); g.innerHTML='';
+  cfg.references.forEach(r=>{
+    const b=document.createElement('button');
+    b.className='refbtn'+(session.ref===r.ref?' on':'');
+    b.innerHTML=`${r.ref}<small>${r.calibre} · ${eur(r.cout)}</small>`;
+    b.onclick=()=>{session={ref:r.ref,calibre:r.calibre,cout:r.cout};save('tri_session',session);renderRefGrid();};
+    g.appendChild(b);
+  });
+}
+function renderRefEditor(){
+  const w=document.getElementById('refEditor'); w.innerHTML='';
+  cfg.references.forEach((r,i)=>{
+    const row=document.createElement('div'); row.className='row';
+    row.innerHTML=`<input value="${r.ref}" data-i="${i}" data-f="ref" placeholder="Référence">
+      <input value="${r.calibre}" data-i="${i}" data-f="calibre" placeholder="Calibre" style="max-width:110px">
+      <input value="${r.cout}" data-i="${i}" data-f="cout" type="number" step="0.01" placeholder="€" style="max-width:80px">`;
+    w.appendChild(row);
+  });
+  document.getElementById('defList').value=cfg.defauts.join(', ');
+  document.getElementById('respList').value=cfg.responsabilites.join(', ');
+}
+
+/* ============ SAISIE : ouverture sheet ============ */
+function openSheet(ctx){
+  const _di=session.dateISO||localISO();
+  draft={
+    dateISO:_di, date:new Date(_di+'T12:00:00').toLocaleDateString('fr-FR'), site:cfg.site,
+    fournisseur:ctx.fournisseur||"MOTIC",
+    reference:ctx.reference||session.ref,
+    calibre:ctx.calibre||session.calibre,
+    cout: ctx.cout!=null?ctx.cout:session.cout,
+    defaut:null, responsabilite:null, quantite:1,
+    code_piece:ctx.code||"", lot:ctx.lot||"", ts:Date.now()
+  };
+  const needRef = !draft.reference;
+  document.getElementById('manualRefWrap').style.display = needRef?'block':'none';
+  if(needRef){
+    const sel=document.getElementById('manualRef'); sel.innerHTML='';
+    cfg.references.forEach(r=>{const o=document.createElement('option');o.value=r.ref;o.textContent=`${r.ref} (${r.calibre})`;sel.appendChild(o);});
+  }
+  document.getElementById('sheetCtx').innerHTML =
+    `<span class="tag t-${draft.fournisseur}">${draft.fournisseur}</span> `+
+    (draft.reference?`<b>${draft.reference}</b> · ${draft.calibre||''}`:'<i>référence à choisir</i>')+
+    (draft.code_piece?`<br>Code pièce : ${draft.code_piece}`:'');
+  // chips défauts
+  const dc=document.getElementById('defChips'); dc.innerHTML='';
+  cfg.defauts.forEach(d=>{const c=document.createElement('button');c.className='chip';c.textContent=d;
+    c.onclick=()=>{dc.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');draft.defaut=d;checkSave();};dc.appendChild(c);});
+  const rc=document.getElementById('respChips'); rc.innerHTML='';
+  cfg.responsabilites.forEach(r=>{const c=document.createElement('button');
+    c.className='chip '+(r.toLowerCase().startsWith('prod')?'prod':'frn');c.textContent=r;
+    c.onclick=()=>{rc.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');draft.responsabilite=r;checkSave();};rc.appendChild(c);});
+  document.getElementById('qVal').textContent='1';
+  document.getElementById('saveEntry').disabled=true;
+  document.getElementById('sheet').classList.add('on');
+}
+function checkSave(){
+  const ok = draft.defaut && draft.responsabilite;
+  document.getElementById('saveEntry').disabled=!ok;
+}
+function closeSheet(){document.getElementById('sheet').classList.remove('on');draft=null;}
+
+document.getElementById('qPlus').onclick=()=>{draft.quantite++;document.getElementById('qVal').textContent=draft.quantite;};
+document.getElementById('qMinus').onclick=()=>{if(draft.quantite>1){draft.quantite--;document.getElementById('qVal').textContent=draft.quantite;}};
+document.getElementById('cancelEntry').onclick=closeSheet;
+document.getElementById('saveEntry').onclick=()=>{
+  if(document.getElementById('manualRefWrap').style.display!=='none'){
+    draft.reference=document.getElementById('manualRef').value;
+    draft.fournisseur=document.getElementById('manualFrn').value;
+    const ri=refInfo(draft.reference); if(ri){draft.calibre=ri.calibre;draft.cout=ri.cout;}
+  }
+  draft.id=(self.crypto&&crypto.randomUUID)?crypto.randomUUID():'id'+draft.ts+Math.random().toString(16).slice(2);
+  const entry={...draft};
+  entries.unshift(entry); save(LS_E,entries); closeSheet(); renderEntries();
+  sbPushSafe([entry]);
+};
+
+/* ============ ENTRÉES ============ */
+function renderEntries(){
+  const l=document.getElementById('entryList'); l.innerHTML='';
+  if(!entries.length){l.innerHTML='<div class="empty">Aucune saisie. Scanne une pièce ou saisis manuellement.</div>';}
+  entries.slice(0,25).forEach(e=>{
+    const row=document.createElement('div'); row.className='entry';
+    row.innerHTML=`<span class="tag t-${e.fournisseur}">${e.fournisseur}</span>
+      <div class="mid"><b>${e.defaut}</b> · ×${e.quantite}
+      <small>${e.reference||'?'} ${e.calibre||''} · ${e.responsabilite} · ${e.date}${e.code_piece?' · '+e.code_piece:''}</small></div>
+      <button class="del">✕</button>`;
+    row.querySelector('.del').onclick=()=>{entries=entries.filter(x=>x.ts!==e.ts);save(LS_E,entries);renderEntries();};
+    l.appendChild(row);
+  });
+  const sd=session.dateISO||localISO();
+  const t=entries.filter(e=>(e.dateISO||localISO(new Date(e.ts)))===sd).reduce((s,e)=>s+e.quantite,0);
+  document.getElementById('cntToday').textContent=t+' le '+new Date(sd+'T12:00:00').toLocaleDateString('fr-FR');
+}
+
+/* ============ SCANNER ============ */
+function isSecure(){return location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1';}
+let torchOn=false, stream=null, scanTimer=null, mfr=null, canvas=null, cctx=null, decoding=false;
+function zxingHints(){
+  const h=new Map();
+  h.set(ZXing.DecodeHintType.TRY_HARDER,true);
+  h.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[
+    ZXing.BarcodeFormat.DATA_MATRIX,ZXing.BarcodeFormat.QR_CODE,
+    ZXing.BarcodeFormat.CODE_128,ZXing.BarcodeFormat.CODE_39,
+    ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8,
+    ZXing.BarcodeFormat.UPC_A,ZXing.BarcodeFormat.ITF,ZXing.BarcodeFormat.CODABAR]);
+  return h;
+}
+function decodeCanvas(v,sx,sy,sw,sh,outW,outH){
+  canvas.width=outW; canvas.height=outH;
+  cctx.drawImage(v,sx,sy,sw,sh,0,0,outW,outH);
+  const src=new ZXing.HTMLCanvasElementLuminanceSource(canvas);
+  const bmp=new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(src));
+  return mfr.decode(bmp); // lève une exception si rien
+}
+async function startScan(scanMode){
+  mode=scanMode; torchOn=false; decoding=false;
+  document.getElementById('scanTitle').textContent = scanMode==='bdl'?'Scanner étiquette BDL':'Scanner pièce';
+  if(!isSecure()){document.getElementById('httpsWarn').style.display='block';return;}
+  document.getElementById('scanner').style.display='flex';
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({audio:false,
+      video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}});
+    const v=document.getElementById('video');
+    v.srcObject=stream; v.setAttribute('playsinline',''); v.muted=true;
+    await v.play();
+    mfr=new ZXing.MultiFormatReader(); mfr.setHints(zxingHints());
+    if(!canvas){canvas=document.createElement('canvas');cctx=canvas.getContext('2d',{willReadFrequently:true});}
+    setupTorch();
+    scanTimer=setInterval(()=>{
+      if(decoding||!v.videoWidth) return;
+      decoding=true;
+      const vw=v.videoWidth, vh=v.videoHeight; let res=null;
+      try{ res=decodeCanvas(v,0,0,vw,vh,vw,vh); }catch(e){}
+      if(!res){ // recadrage central + agrandissement x2 pour les petits Data Matrix
+        const cw=Math.round(vw*0.8), ch=Math.round(vh*0.5), sx=(vw-cw)/2, sy=(vh-ch)/2;
+        try{ res=decodeCanvas(v,sx,sy,cw,ch,cw*2,ch*2); }catch(e){}
+      }
+      decoding=false;
+      if(res){const fmt=ZXing.BarcodeFormat[res.getBarcodeFormat()]||'';flashOK();onScan(res.getText(),fmt);}
+    },220);
+  }catch(e){alert('Caméra : '+e.message);stopScan();}
+}
+function flashOK(){const r=document.querySelector('.reticle');if(r){r.style.borderColor='#3DCD58';setTimeout(()=>r.style.borderColor='#fff',400);}}
+function setupTorch(){
+  const btn=document.getElementById('torchBtn'); btn.textContent='💡'; btn.style.display='none';
+  try{
+    const track=stream&&stream.getVideoTracks&&stream.getVideoTracks()[0];
+    const caps=track&&track.getCapabilities&&track.getCapabilities();
+    if(caps&&caps.torch){
+      btn.style.display='inline-block';
+      btn.onclick=()=>{torchOn=!torchOn;track.applyConstraints({advanced:[{torch:torchOn}]}).catch(()=>{});btn.textContent=torchOn?'💡✓':'💡';};
+    }
+  }catch(e){}
+}
+function stopScan(){
+  if(scanTimer){clearInterval(scanTimer);scanTimer=null;}
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+  torchOn=false;decoding=false;
+  document.getElementById('scanner').style.display='none';
+}
+document.getElementById('scanClose').onclick=stopScan;
+
+function onScan(text, fmt){
+  const frn = supplierFromFormat(fmt); // Data Matrix/QR = MOTIC · 1D = KUVAG
+  stopScan(); navigator.vibrate&&navigator.vibrate(60);
+
+  // Scan de l'étiquette BDL → fixe le poste (référence + calibre + coût)
+  if(mode==='bdl'){
+    const p = parseMotic(text);
+    if(p.ref){
+      const ri=refInfo(p.ref);
+      session = ri ? {ref:ri.ref,calibre:ri.calibre,cout:ri.cout} : {ref:p.ref,calibre:'?',cout:0};
+      save('tri_session',session); renderRefGrid();
+    } else {
+      alert("Étiquette BDL non reconnue. Sélectionne le poste à la main.");
+    }
+    return;
+  }
+
+  // Scan d'une pièce : la RÉFÉRENCE vient toujours du BDL sélectionné.
+  // Le Data Matrix MOTIC ne contient qu'un numéro → gardé comme code de traçabilité.
+  if(!session.ref){ alert("Choisis d'abord le poste / BDL en cours."); return; }
+  const p = parseMotic(text);
+  openSheet({
+    fournisseur: frn,
+    reference: session.ref, calibre: session.calibre, cout: session.cout,
+    code: text,          // numéro scanné = traçabilité pièce
+    lot: p.lot || ''     // KXCU… si présent, sinon vide
+  });
+}
+
+document.getElementById('scanPart').onclick=()=>startScan('part');
+document.getElementById('scanBdl').onclick=()=>startScan('bdl');
+document.getElementById('manual').onclick=()=>openSheet({fournisseur:'MOTIC'});
+
+/* ============ DASHBOARD ============ */
+let charts={};
+function filterScope(){
+  const s=document.getElementById('dashScope').value;
+  if(s==='week'){const w=excelWeekNum(new Date());return entries.filter(e=>entryWeek(e)===w);}
+  return entries;
+}
+function agg(arr,key){const m={};arr.forEach(e=>{const k=e[key]||'?';m[k]=(m[k]||0)+e.quantite;});return m;}
+function renderDash(){
+  const d=filterScope();
+  const pieces=d.reduce((s,e)=>s+e.quantite,0);
+  const cout=d.reduce((s,e)=>s+e.quantite*(e.cout||0),0);
+  const coutF=d.filter(e=>/fourn/i.test(e.responsabilite||'')).reduce((s,e)=>s+e.quantite*(e.cout||0),0);
+  const coutP=d.filter(e=>/prod/i.test(e.responsabilite||'')).reduce((s,e)=>s+e.quantite*(e.cout||0),0);
+  document.getElementById('kPieces').textContent=pieces;
+  document.getElementById('kCout').textContent=eur(cout);
+  document.getElementById('kCoutF').textContent=eur(coutF);
+  document.getElementById('kCoutP').textContent=eur(coutP);
+  document.getElementById('kKuvag').textContent=d.filter(e=>e.fournisseur==='KUVAG').reduce((s,e)=>s+e.quantite,0);
+  document.getElementById('kMotic').textContent=d.filter(e=>e.fournisseur==='MOTIC').reduce((s,e)=>s+e.quantite,0);
+  const grid='#2a3630', txt='#8ea095';
+  Chart.defaults.color=txt; Chart.defaults.borderColor=grid; Chart.defaults.font.family='Inter,sans-serif';
+  // Suivi par semaine (toutes les données, ordre croissant)
+  const wk={}; entries.forEach(e=>{const w=entryWeek(e); wk[w]=(wk[w]||0)+e.quantite;});
+  const wkeys=Object.keys(wk).map(Number).sort((a,b)=>a-b);
+  drawBar('chWeek', wkeys.map(w=>'S'+w), wkeys.map(w=>wk[w]), '#3DCD58');
+  // Pareto défauts (décroissant)
+  const def=agg(d,'defaut');
+  const dk=Object.keys(def).sort((a,b)=>def[b]-def[a]);
+  drawBar('chDef',dk,dk.map(k=>def[k]),'#3DCD58');
+  // Responsabilité
+  const rp=agg(d,'responsabilite');
+  drawDoughnut('chResp',Object.keys(rp),Object.values(rp),['#ff5c6c','#c084fc','#3aa0ff']);
+  // Par référence (croissant)
+  const rf=agg(d,'reference');
+  const rk=Object.keys(rf).sort((a,b)=>rf[a]-rf[b]);
+  drawBar('chRef',rk,rk.map(k=>rf[k]),'#3aa0ff');
+}
+function drawBar(id,labels,data,color){
+  if(charts[id])charts[id].destroy();
+  charts[id]=new Chart(document.getElementById(id),{type:'bar',
+    data:{labels,datasets:[{data,backgroundColor:color,borderRadius:6}]},
+    options:{plugins:{legend:{display:false},
+      datalabels:{anchor:'end',align:'end',color:'#e8efe9',font:{weight:'700',size:11},formatter:v=>v}},
+      layout:{padding:{top:18}},
+      scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0}}}}});
+}
+function drawDoughnut(id,labels,data,colors){
+  if(charts[id])charts[id].destroy();
+  charts[id]=new Chart(document.getElementById(id),{type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:0}]},
+    options:{plugins:{legend:{position:'bottom'},
+      datalabels:{color:'#fff',font:{weight:'800',size:14},formatter:v=>v}}}});
+}
+document.getElementById('dashScope').onchange=renderDash;
+
+/* ============ EXPORT / IMPORT ============ */
+// Colonnes calées EXACTEMENT sur l'onglet « traversée » du fichier de suivi
+const EXPORT_HEADER=['Date','Semaine','Fournisseur','Référence','Type','Cause','Departement','Quantité','Prix'];
+function exportAOA(){
+  const rows=entries.map(e=>{const d=entryDate(e);
+    return [d, excelWeekNum(d), titleFrn(e.fournisseur), e.reference||'', e.calibre||'', e.defaut||'', e.responsabilite||'', e.quantite||1, e.cout||0];
+  });
+  return [EXPORT_HEADER,...rows];
+}
+document.getElementById('expXlsx').onclick=()=>{
+  const ws=XLSX.utils.aoa_to_sheet(exportAOA(),{cellDates:true});
+  const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'traversée');
+  XLSX.writeFile(wb,'Suivi_rebut_traversees_'+new Date().toISOString().slice(0,10)+'.xlsx');
+};
+document.getElementById('expCsv').onclick=()=>{
+  const ws=XLSX.utils.aoa_to_sheet(exportAOA(),{cellDates:true});
+  const csv=XLSX.utils.sheet_to_csv(ws,{FS:';'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv'}));
+  a.download='Suivi_rebut_traversees.csv';a.click();
+};
+document.getElementById('impXlsx').onclick=()=>document.getElementById('fileIn').click();
+document.getElementById('fileIn').onchange=(ev)=>{
+  const f=ev.target.files[0]; if(!f)return;
+  const rd=new FileReader();
+  rd.onload=(e)=>{
+    const wb=XLSX.read(e.target.result,{type:'binary',cellDates:true});
+    const sh=wb.Sheets['traversée']||wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(sh);
+    const pick=(r,keys)=>{for(const k of keys){if(r[k]!=null&&r[k]!=='')return r[k];}return '';};
+    let n=0;
+    rows.forEach(r=>{
+      const dv=pick(r,['Date']); let dd=null;
+      if(dv instanceof Date)dd=dv;
+      else if(typeof dv==='string'&&dv){const pd=new Date(dv);if(!isNaN(pd))dd=pd;}
+      if(!dd)dd=new Date();
+      const ts=Date.now()+n, dstr=dd.toLocaleDateString('fr-FR'), diso=localISO(dd);
+      const frn=String(pick(r,['Fournisseur'])).toUpperCase();
+      entries.push({id:(self.crypto&&crypto.randomUUID)?crypto.randomUUID():'id'+ts+n,dateISO:diso,date:dstr,site:cfg.site,
+        fournisseur:frn.includes('KUV')?'KUVAG':(frn.includes('MOT')?'MOTIC':frn),
+        reference:pick(r,['Référence','Reference']),
+        calibre:pick(r,['Type','Calibre']),
+        defaut:pick(r,['Cause','Défaut']),
+        responsabilite:pick(r,['Departement','Département','Responsabilité']),
+        quantite:Number(pick(r,['Quantité','Quantite']))||1,
+        cout:Number(String(pick(r,['Prix','Coût'])).replace(',','.'))||0,
+        code_piece:pick(r,['Code pièce']),lot:pick(r,['Lot']),ts});
+      n++;
+    });
+    save(LS_E,entries);renderEntries();alert(n+' ligne(s) importée(s).');
+  };
+  rd.readAsBinaryString(f);
+};
+document.getElementById('wipe').onclick=()=>{if(confirm('Supprimer toutes les saisies ?')){entries=[];save(LS_E,entries);renderEntries();}};
+document.getElementById('recalc').onclick=()=>{
+  let n=0; entries.forEach(e=>{const ri=refInfo(e.reference); if(ri){e.cout=ri.cout;n++;}});
+  save(LS_E,entries); renderEntries();
+  if(document.getElementById('v-dash').classList.contains('on'))renderDash();
+  alert(n+' ligne(s) recalculée(s) au tarif du référentiel.');
+};
+
+/* ============ RÉFÉRENTIEL edit ============ */
+document.getElementById('addRef').onclick=()=>{cfg.references.push({ref:'',calibre:'',cout:0});save(LS_C,cfg);renderRefEditor();};
+document.getElementById('saveCfg').onclick=()=>{
+  document.querySelectorAll('#refEditor input').forEach(inp=>{
+    const i=+inp.dataset.i,f=inp.dataset.f;
+    cfg.references[i][f] = f==='cout'?(Number(inp.value)||0):inp.value.trim();
+  });
+  cfg.references=cfg.references.filter(r=>r.ref);
+  cfg.defauts=document.getElementById('defList').value.split(',').map(s=>s.trim()).filter(Boolean);
+  cfg.responsabilites=document.getElementById('respList').value.split(',').map(s=>s.trim()).filter(Boolean);
+  save(LS_C,cfg);renderRefGrid();renderRefEditor();alert('Référentiel enregistré.');
+};
+
+/* ============ SUPABASE (optionnel, local-first) ============ */
+function sbCfg(){return load('tri_sb',{url:'',key:'',table:'rebut_traversees'});}
+function sbHeaders(c){return {'apikey':c.key,'Authorization':'Bearer '+c.key};}
+function sbBase(c){return c.url.replace(/\/+$/,'')+'/rest/v1/'+(c.table||'rebut_traversees');}
+function sbRow(e){const d=new Date(e.ts);return {id:e.id,date:d.toISOString().slice(0,10),semaine:excelWeekNum(d),
+  fournisseur:titleFrn(e.fournisseur),reference:e.reference||'',type:e.calibre||'',cause:e.defaut||'',
+  departement:e.responsabilite||'',quantite:e.quantite||1,prix:e.cout||0,code_piece:e.code_piece||'',lot:e.lot||''};}
+async function sbPush(list){const c=sbCfg();if(!c.url||!c.key)throw new Error('connexion non configurée');
+  const r=await fetch(sbBase(c)+'?on_conflict=id',{method:'POST',
+    headers:{...sbHeaders(c),'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+    body:JSON.stringify(list.map(sbRow))});
+  if(!r.ok)throw new Error(r.status+' '+(await r.text()).slice(0,120));}
+function sbPushSafe(list){const c=sbCfg();if(!c.url||!c.key)return;
+  sbPush(list).then(()=>{list.forEach(e=>{const x=entries.find(y=>y.id===e.id);if(x)x.synced=true;});save(LS_E,entries);}).catch(()=>{});}
+async function sbPull(){const c=sbCfg();if(!c.url||!c.key)throw new Error('connexion non configurée');
+  const r=await fetch(sbBase(c)+'?select=*',{headers:sbHeaders(c)});if(!r.ok)throw new Error('lecture '+r.status);
+  const rows=await r.json();const ids=new Set(entries.map(e=>e.id));let add=0;
+  rows.forEach(row=>{if(row.id&&!ids.has(row.id)){const ts=row.date?new Date(row.date).getTime():Date.now();
+    entries.push({id:row.id,ts,date:new Date(ts).toLocaleDateString('fr-FR'),site:cfg.site,
+      fournisseur:(row.fournisseur||'').toUpperCase(),reference:row.reference||'',calibre:row.type||'',
+      defaut:row.cause||'',responsabilite:row.departement||'',quantite:Number(row.quantite)||1,
+      cout:Number(row.prix)||0,code_piece:row.code_piece||'',lot:row.lot||'',synced:true});add++;}});
+  save(LS_E,entries);return {added:add,total:rows.length};}
+(function(){const c=sbCfg();document.getElementById('sbUrl').value=c.url;document.getElementById('sbKey').value=c.key;document.getElementById('sbTable').value=c.table||'rebut_traversees';})();
+document.getElementById('sbSave').onclick=()=>{save('tri_sb',{url:document.getElementById('sbUrl').value.trim(),key:document.getElementById('sbKey').value.trim(),table:document.getElementById('sbTable').value.trim()||'rebut_traversees'});document.getElementById('sbStatus').textContent='Connexion enregistrée.';};
+document.getElementById('sbSync').onclick=async()=>{const s=document.getElementById('sbStatus');
+  try{s.textContent='Synchro…';const uns=entries.filter(e=>!e.synced&&e.id);if(uns.length)await sbPush(uns);
+    uns.forEach(e=>e.synced=true);save(LS_E,entries);const p=await sbPull();renderEntries();
+    s.textContent='OK · '+uns.length+' envoyée(s), '+p.added+' reçue(s).';}
+  catch(err){s.textContent='Erreur : '+err.message;}};
+
+/* ============ DATE TRAITÉE ============ */
+function initSessDate(){
+  if(!session.dateISO)session.dateISO=localISO();
+  const el=document.getElementById('sessDate'); if(el)el.value=session.dateISO;
+}
+document.getElementById('sessDate').onchange=e=>{session.dateISO=e.target.value||localISO();save('tri_session',session);renderEntries();};
+document.getElementById('sessHier').onclick=()=>{const d=new Date();d.setDate(d.getDate()-1);session.dateISO=localISO(d);document.getElementById('sessDate').value=session.dateISO;save('tri_session',session);renderEntries();};
+
+/* ============ NAV ============ */
+document.querySelectorAll('nav button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); document.getElementById('v-'+b.dataset.v).classList.add('on');
+    if(b.dataset.v==='dash')renderDash();
+  };
+});
+
+/* ============ INIT ============ */
+if(window.ChartDataLabels)Chart.register(ChartDataLabels);
+document.getElementById('today').textContent=todayStr();
+session=load('tri_session',session);
+initSessDate();
+if(!isSecure())document.getElementById('httpsWarn').style.display='block';
+renderRefGrid();renderRefEditor();renderEntries();
+</script>
+</body>
+</html>
